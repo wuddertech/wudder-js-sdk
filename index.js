@@ -130,28 +130,33 @@ const Wudder = {
             return result;
         }
 
+        const getEvent = async evhash => {
+            const response = await wudderFetch({
+                query: `
+                    query Trace($evhash: String!){
+                        evidence(evhash: $evhash){
+                            id
+                            displayName
+                            evidence
+                            evhash
+                            graphnData
+                            originalContent
+                        }
+                    }
+                `,
+                variables: {
+                    evhash
+                }
+            });
+
+            console.log(response);
+
+            return response.data.evidence;
+        }
+
 
         return {
-            getEvent: async evhash => {
-                const response = await wudderFetch({
-                    query: `
-                        query Trace($evhash: String!){
-                            evidence(evhash: $evhash){
-                                id
-                                displayName
-                                evidence
-                                evhash
-                                originalContent
-                            }
-                        }
-                    `,
-                    variables: {
-                        evhash
-                    }
-                });
-
-                return response.data.evidence;
-            },
+            getEvent,
             getTrace: async evhash => {
                 const response = await wudderFetch({
                     query: `
@@ -190,7 +195,10 @@ const Wudder = {
                 const result = await createEvidence(data, 'ADD_EVENT');
                 return result;
             },
-            
+            getProof: async evhash => {
+                const evidence = await getEvent(evhash);
+            }
+
         }
     }
 }
