@@ -77,6 +77,10 @@ const Wudder = {
         
         setInterval(getWudderToken, 20000000);
 
+        const createEvidence = async (data, type) => {
+
+        }
+
 
         return {
             getEvent: async evhash => {
@@ -131,139 +135,5 @@ const Wudder = {
         }
     }
 }
-
-//class Wudder {
- 
-
-    
-
-    // async signup () {
-    //     const response = await wudderFetch({
-    //         query: `
-    //             mutation createUser($user: UserInput!, $password: String!){
-    //                 createUser(user: $user, password: $password){
-    //                     id
-    //                 }
-    //             }
-    //         `,
-    //         variables: {
-    //             user: {
-    //                 name: 'claudia',
-    //                 surname: '',
-    //                 email: 'info@weareclaudia.com'
-    //             },
-    //             password: 'Claudia_2019com'
-    //         }
-    //     });
-    // }
-
-
-
-
-    // createEvidence: async (data, displayName) => {
-    //     const response = await wudderFetch({
-    //         query: `
-    //             mutation FormatEvidence($content: String!, $displayName: String!){
-    //                 formatEvidence(content: $content, displayName: $displayName){
-    //                     formattedEvidence
-    //                     preparedContent
-    //                     hash
-    //                 }
-    //             }
-    //         `,
-    //         variables: {
-    //             content: stringify({
-    //                 type: data.type,
-    //                 trace: data.trace,
-    //                 fragments: data.fragments,
-    //                 descriptor: []
-    //             }),
-    //             displayName
-    //         }
-    //     });
-
-    //     const formatEvidence = response.data.formatEvidence;
-
-    //     const signedContent = account.sign(formatEvidence.formattedEvidence);
-
-    //     const evidence = {
-    //         event_tx: signedContent.message,
-    //         signature: signedContent.signature.substring(2)
-    //     };
-
-    //     const result = await wudderFetch({
-    //         query: `
-    //             mutation CreateEvidence($evidence: EvidenceInput!, $hash: String!){
-    //                 createEvidence(evidence: $evidence, hash: $hash){
-    //                     id
-    //                     evhash
-    //                     evidence
-    //                     originalEvidence
-    //                 }
-    //             }
-    //         `,
-    //         variables: {
-    //             evidence,
-    //             hash: formatEvidence.hash
-    //         }
-    //     });
-
-    //     return result;
-
-    // },
-
-
-    // getTrace: async evhash => {
-    //     const response = await wudderFetch({
-    //         query: `
-    //             query Trace($evhash: String!){
-    //                 trace(evhash: $evhash){
-    //                     creationEvidence {
-    //                         id
-    //                         displayName
-    //                         evidence
-    //                         evhash
-    //                         originalEvidence
-    //                     }
-    //                     childs {
-    //                         id
-    //                         displayName
-    //                         evidence
-    //                         evhash
-    //                         originalEvidence
-    //                     }
-    //                 }
-    //             }
-    //         `,
-    //         variables: {
-    //             evhash
-    //         }
-    //     });
-
-    //     return response.data.trace;
-    // },
-
-    // getMyTraces: async () => {
-    //     const response = await wudderFetch({
-    //         query: `
-    //             query MyTraces{
-    //                 myTraces{
-    //                     id
-    //                     displayName
-    //                     evidence
-    //                     evhash
-    //                     originalEvidence
-    //                 }
-    //             }
-    //         `
-    //     });
-
-    //     if(response.data){
-    //         return response.data.myTraces;
-    //     }
-
-    //     return response.errors;
-    // }
-//}
 
 export default Wudder;
