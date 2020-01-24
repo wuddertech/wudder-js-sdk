@@ -77,6 +77,59 @@ const Wudder = {
         
         setInterval(getWudderToken, 20000000);
 
+        const createEvidence = async ({
+            fragments,
+            trace,
+            displayName
+        }, type) => {
+            const response = await wudderFetch({
+                query: `
+                    mutation formatTransaction($content: ContentInput!, $displayName: String!){
+                        formatTransaction(content: $content, displayName: $displayName){
+                            formattedTransaction
+                            preparedContent
+                        }
+                    }
+                `,
+                variables: {
+                    content: {
+                        type,
+                        trace,
+                        fragments,
+                        descriptor: []
+                    },
+                    displayName
+                }
+            });
+
+            const formatEvidence = response.data.formatTransaction;
+
+            const signedContent = account.sign(formatEvidence.formattedTransaction);
+
+            const evidence = {
+                event_tx: signedContent.message,
+                signature: signedContent.signature.substring(2)
+            };
+
+            const result = await wudderFetch({
+                query: `
+                    mutation CreateEvidence($evidence: EvidenceInput!){
+                        createEvidence(evidence: $evidence){
+                            id
+                            evhash
+                            evidence
+                            originalContent
+                        }
+                    }
+                `,
+                variables: {
+                    evidence
+                }
+            });
+
+            return result;
+        }
+
 
         return {
             getEvent: async evhash => {
@@ -128,176 +181,18 @@ const Wudder = {
         
                 return response.data.trace;
             },
-            
-            createTrace: async ({
-                fragments,
-                trace,
-                displayName
-            }) => {
-                const response = await wudderFetch({
-                    query: `
-                        mutation formatTransaction($content: ContentInput!, $displayName: String!){
-                            formatTransaction(content: $content, displayName: $displayName){
-                                formattedTransaction
-                                preparedContent
-                            }
-                        }
-                    `,
-                    variables: {
-                        content: {
-                            type: 'NEW_TRACE',
-                            trace,
-                            fragments,
-                            descriptor: []
-                        },
-                        displayName
-                    }
-                });
-
-                const formatEvidence = response.data.formatTransaction;
-
-                const signedContent = account.sign(formatEvidence.formattedTransaction);
-
-                const evidence = {
-                    event_tx: signedContent.message,
-                    signature: signedContent.signature.substring(2)
-                };
-
-                const result = await wudderFetch({
-                    query: `
-                        mutation CreateEvidence($evidence: EvidenceInput!){
-                            createEvidence(evidence: $evidence){
-                                id
-                                evhash
-                                evidence
-                                originalContent
-                            }
-                        }
-                    `,
-                    variables: {
-                        evidence
-                    }
-                });
-
+            createTrace: async data => {
+                const result = await createEvidence(data, 'NEW_TRACE');
                 return result;
-
             },
+
+            addEvent: async data => {
+                const result = await createEvidence(data, 'ADD_EVENT');
+                return result;
+            },
+            
         }
     }
 }
-
-//class Wudder {
- 
-
-    
-
-    // async signup () {
-    //     const response = await wudderFetch({
-    //         query: `
-    //             mutation createUser($user: UserInput!, $password: String!){
-    //                 createUser(user: $user, password: $password){
-    //                     id
-    //                 }
-    //             }
-    //         `,
-    //         variables: {
-    //             user: {
-    //                 name: 'claudia',
-    //                 surname: '',
-    //                 email: 'info@weareclaudia.com'
-    //             },
-    //             password: 'Claudia_2019com'
-    //         }
-    //     });
-    // }
-
-
-
-
-    // createEvidence: async (data, displayName) => {
-    //     const response = await wudderFetch({
-    //         query: `
-    //             mutation FormatEvidence($content: String!, $displayName: String!){
-    //                 formatEvidence(content: $content, displayName: $displayName){
-    //                     formattedEvidence
-    //                     preparedContent
-    //                     hash
-    //                 }
-    //             }
-    //         `,
-    //         variables: {
-    //             content: stringify({
-    //                 type: data.type,
-    //                 trace: data.trace,
-    //                 fragments: data.fragments,
-    //                 descriptor: []
-    //             }),
-    //             displayName
-    //         }
-    //     });
-
-    //     const formatEvidence = response.data.formatEvidence;
-
-    //     const signedContent = account.sign(formatEvidence.formattedEvidence);
-
-    //     const evidence = {
-    //         event_tx: signedContent.message,
-    //         signature: signedContent.signature.substring(2)
-    //     };
-
-    //     const result = await wudderFetch({
-    //         query: `
-    //             mutation CreateEvidence($evidence: EvidenceInput!, $hash: String!){
-    //                 createEvidence(evidence: $evidence, hash: $hash){
-    //                     id
-    //                     evhash
-    //                     evidence
-    //                     originalEvidence
-    //                 }
-    //             }
-    //         `,
-    //         variables: {
-    //             evidence,
-    //             hash: formatEvidence.hash
-    //         }
-    //     });
-
-    //     return result;
-
-    // },
-
-
-    // getTrace: async evhash => {
-    //     const response = await wudderFetch({
-    //         query: `
-    //             query Trace($evhash: String!){
-    //                 trace(evhash: $evhash){
-    //                     creationEvidence {
-    //                         id
-    //                         displayName
-    //                         evidence
-    //                         evhash
-    //                         originalEvidence
-    //                     }
-    //                     childs {
-    //                         id
-    //                         displayName
-    //                         evidence
-    //                         evhash
-    //                         originalEvidence
-    //                     }
-    //                 }
-    //             }
-    //         `,
-    //         variables: {
-    //             evhash
-    //         }
-    //     });
-
-    //     return response.data.trace;
-    // },
-
-
-//}
 
 export default Wudder;
