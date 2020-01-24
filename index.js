@@ -3,7 +3,6 @@ const Accounts = require('web3-eth-accounts');
 const createApolloFetch = require('apollo-fetch').createApolloFetch;
 const accounts = new Accounts();
 
-
 const Wudder = {
     signup: async ({ email, password, privateKeyPassword = '', uri }) => {
         const account = accounts.create();
@@ -42,6 +41,7 @@ const Wudder = {
             uri,
         });
 
+        
         wudderFetch.use(({ request, options }, next) => {
             if (!options.headers) {
                 options.headers = {};  // Create the headers object if needed.
@@ -70,11 +70,65 @@ const Wudder = {
             refreshToken = response.data.login.refreshToken;
         
             account = accounts.decrypt(response.data.login.ethAccount, ethPassword? ethPassword : '');
+
         }
         
-        getWudderToken();
+        await getWudderToken();
         
         setInterval(getWudderToken, 20000000);
+
+
+        return {
+            getEvent: async evhash => {
+                const response = await wudderFetch({
+                    query: `
+                        query Trace($evhash: String!){
+                            evidence(evhash: $evhash){
+                                id
+                                displayName
+                                evidence
+                                evhash
+                                originalContent
+                            }
+                        }
+                    `,
+                    variables: {
+                        evhash
+                    }
+                });
+
+                return response.data.evidence;
+            },
+            getTrace: async evhash => {
+                const response = await wudderFetch({
+                    query: `
+                        query Trace($evhash: String!){
+                            trace(evhash: $evhash){
+                                creationEvidence {
+                                    id
+                                    displayName
+                                    evidence
+                                    evhash
+                                    originalContent
+                                }
+                                childs {
+                                    id
+                                    displayName
+                                    evidence
+                                    evhash
+                                    originalContent
+                                }
+                            }
+                        }
+                    `,
+                    variables: {
+                        evhash
+                    }
+                });
+        
+                return response.data.trace;
+            }
+        }
     }
 }
 
@@ -158,26 +212,6 @@ const Wudder = {
 
     // },
 
-    // getEvidence: async evhash => {
-    //     const response = await wudderFetch({
-    //         query: `
-    //             query Trace($evhash: String!){
-    //                 evidence(evhash: $evhash){
-    //                     id
-    //                     displayName
-    //                     evidence
-    //                     evhash
-    //                     originalEvidence
-    //                 }
-    //             }
-    //         `,
-    //         variables: {
-    //             evhash
-    //         }
-    //     });
-
-    //     return response.data.evidence;
-    // },
 
     // getTrace: async evhash => {
     //     const response = await wudderFetch({
