@@ -5,6 +5,33 @@ const accounts = new Accounts();
 
 
 const Wudder = {
+    signup: async ({ email, password, privateKeyPassword = '', uri }) => {
+        const account = accounts.create();
+        const ethAccount = stringify(account.encrypt(privateKeyPassword));
+        const wudderFetch = createApolloFetch({
+            uri,
+        });
+
+        const response = await wudderFetch({
+            query: `
+                mutation createUser($user: UserInput!, $password: String!){
+                    createUser(user: $user, password: $password){
+                        id
+                    }
+                }
+            `,
+            variables: {
+                user: {
+                    email,
+                    ethAccount
+                },
+                password
+            }
+        });
+
+        return response;
+    },
+
     initialize: async ({ email, password, uri, ethPassword }) => {     
         let token = null;
         let refreshToken = null;
@@ -42,7 +69,7 @@ const Wudder = {
             token = response.data.login.token;
             refreshToken = response.data.login.refreshToken;
         
-            account = accounts.decrypt(response.data.login.account, ethPassword? ethPassword : '');
+            account = accounts.decrypt(response.data.login.ethAccount, ethPassword? ethPassword : '');
         }
         
         getWudderToken();
