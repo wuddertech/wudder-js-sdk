@@ -1,0 +1,34 @@
+{
+  "name": "wudder-js",
+  "version": "0.0.1",
+  "description": "Wudder's javascript SDK",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wuddertech/wudder-js.git"
+  },
+  "keywords": [
+    "Wudder",
+    "JS",
+    "Blockchain",
+    "Evidences"
+  ],
+  "author": "Aaron Fuentes",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wuddertech/wudder-js/issues"
+  },
+  "homepage": "https://github.com/wuddertech/wudder-js#readme",
+  "dependencies": {
+    "apollo-fetch": "^0.7.0",
+    "node-fetch": "^2.6.0",
+    "typescript": "^3.7.5"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.3.10"
+  }
+}
