@@ -183,7 +183,6 @@ const Wudder = {
                         evhash
                     }
                 });
-        
                 return response.data.trace;
             },
             createTrace: async data => {
@@ -197,6 +196,39 @@ const Wudder = {
             },
             getProof: async evhash => {
                 const evidence = await getEvent(evhash);
+            },
+            myTraces: async options => {
+                if(!options){
+                    throw new Error('The pagination options are required');
+                }
+
+                if(options.offset === undefined || options.offset === null || options.offset < 0){
+                    throw new Error('Invalid offset');
+                }
+
+                if(!options.limit || options.limit > 20 || options <= 0){
+                    throw new Error('Invalid limit, it only accepts values between 1 and 20');
+                }
+
+                const response = await wudderFetch({
+                    query: `query MyTraces($options: OptionsInput){
+                        myTraces(options: $options){
+                            list {
+                                id
+                                displayName
+                                evidence
+                                evhash
+                                originalContent
+                            }
+                            total
+                        }
+                    }`,
+                    variables: {
+                        options
+                    }
+                });
+
+                return response;
             }
 
         }

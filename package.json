@@ -1,6 +1,6 @@
 {
   "name": "wudder-js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Wudder's javascript SDK",
   "main": "index.js",
   "scripts": {
