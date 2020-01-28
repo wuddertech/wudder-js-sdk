@@ -149,7 +149,9 @@ const Wudder = {
                 }
             });
 
-            console.log(response);
+            if(response.errors){
+                throw new Error(response.errors[0].message);
+            }
 
             return response.data.evidence;
         }
@@ -196,6 +198,20 @@ const Wudder = {
             },
             getProof: async evhash => {
                 const evidence = await getEvent(evhash);
+
+                const graphnData = JSON.parse(evidence.graphnData);
+
+                let proof = {
+                    graphnProof: graphnData.proof
+                }
+
+                if(graphnData.prefixes && graphnData.prefixes.ethereum){
+                    proof.anchorTxs = Object.keys(graphnData.prefixes).reduce((acc, curr) => {
+                        acc[curr] = graphnData.prefixes[curr].tx_hash;
+                        return acc;
+                    }, {});
+                }
+                return proof;
             },
             myTraces: async options => {
                 if(!options){
