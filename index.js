@@ -1,4 +1,6 @@
+'use strict';
 import stringify from 'json-stable-stringify';
+import { getRootHash } from 'wudder-js/utils';
 const Accounts = require('web3-eth-accounts');
 const createApolloFetch = require('apollo-fetch').createApolloFetch;
 const accounts = new Accounts();
@@ -31,7 +33,7 @@ const Wudder = {
         return response;
     },
 
-    initialize: async ({ email, password, uri, ethPassword }) => {     
+    initialize: async ({ email, password, uri, ethPassword }) => {
         let token = null;
         let refreshToken = null;
         let account = null;
@@ -41,7 +43,6 @@ const Wudder = {
             uri,
         });
 
-        
         wudderFetch.use(({ request, options }, next) => {
             if (!options.headers) {
                 options.headers = {};  // Create the headers object if needed.
@@ -68,13 +69,12 @@ const Wudder = {
             });
             token = response.data.login.token;
             refreshToken = response.data.login.refreshToken;
-        
             account = accounts.decrypt(response.data.login.ethAccount, ethPassword? ethPassword : '');
 
         }
-        
+
         await getWudderToken();
-        
+
         setInterval(getWudderToken, 20000000);
 
         const createEvidence = async ({
@@ -212,6 +212,20 @@ const Wudder = {
                     }, {});
                 }
                 return proof;
+            },
+            checkEthereumProof: async (proof, ethereumEndpoint = 'https://cloudflare-eth.com/') => {
+                const rootHash = getRootHash(proof.graphnProof);
+                const response = await fetch(ethereumEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "jsonrpc": "2.0", "method": "eth_getTransactionByHash", "params": [proof.anchorTxs.ethereum], "id": 1
+                    })
+                });
+                const json = await response.json();
+                return rootHash === json.result.input.substring(2);
             },
             myTraces: async options => {
                 if(!options){
