@@ -1,16 +1,16 @@
-import { sha3_512 } from 'js-sha3';
-import blake from 'blakejs';
-import stringify from 'json-stable-stringify';
+const { sha3_512 } = require('js-sha3');
+const blake = require('blakejs');
+const stringify = require('json-stable-stringify');
 
-export const mtk_512 = string => {
+module.exports.mtk_512 = string => {
     return blake.blake2bHex(sha3_512(string) + string);
 }
 
-export const mtk_256 = string => {
+module.exports.mtk_256 = string => {
     return blake.blake2bHex(sha3_512(string) + string, undefined, 32);
 }
 
-export const createHashes = string => {
+module.exports.createHashes = string => {
     const prvhash = mtk_512(string);
     return {
         prvhash,
@@ -18,7 +18,7 @@ export const createHashes = string => {
     }
 }
 
-export const ctHashFromContent = content => {
+module.exports.ctHashFromContent = content => {
     const data = stringify({
         type: content.type,
         trace: content.trace,
@@ -32,7 +32,7 @@ export const ctHashFromContent = content => {
     return mtk_512(data);
 }
 
-export const getRootHash = proof => {
+module.exports.getRootHash = proof => {
     if(proof.length < 65){
         return {
             valid: false

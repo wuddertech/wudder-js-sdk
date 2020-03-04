@@ -1,6 +1,6 @@
 'use strict';
-import stringify from 'json-stable-stringify';
-import { getRootHash } from 'wudder-js/utils';
+const stringify = require('json-stable-stringify');
+const { getRootHash } = require('wudder-js/utils');
 const Accounts = require('web3-eth-accounts');
 const createApolloFetch = require('apollo-fetch').createApolloFetch;
 const accounts = new Accounts();
@@ -265,4 +265,4 @@ const Wudder = {
     }
 }
 
-export default Wudder;
+module.exports = Wudder;
