@@ -33,9 +33,9 @@ const Wudder = {
         return response;
     },
 
-    initialize: async ({ email, password, uri, ethPassword }) => {
-        let token = null;
-        let refreshToken = null;
+    initialize: async ({ email, password, uri, ethPassword, token: newToken = null, refreshToken: newRefreshToken = null }) => {
+        let token = newToken;
+        let refreshToken = newRefreshToken;
         let account = null;
         let wudderFetch = null;
 
@@ -45,7 +45,7 @@ const Wudder = {
 
         wudderFetch.use(({ request, options }, next) => {
             if (!options.headers) {
-                options.headers = {};  // Create the headers object if needed.
+                options.headers = {};
             }
             options.headers['x-jwt-token'] = token;
             next();
@@ -67,15 +67,56 @@ const Wudder = {
                     password
                 }
             });
+
             token = response.data.login.token;
             refreshToken = response.data.login.refreshToken;
             account = accounts.decrypt(response.data.login.ethAccount, ethPassword? ethPassword : '');
+        }
+
+        const getNewToken = async (refresh) => {
+            const response = await wudderFetch({
+                query: `
+                    mutation refreshToken($token: String!){
+                        refreshToken(token: $token){
+                            token
+                            refreshToken
+                        }
+                    }
+                `,
+                variables: {
+                    token: refresh
+                }
+            });
+
+
+            token = response.data.refreshToken.token;
+            refreshToken = response.data.refreshToken.refreshToken;
+
+
+            setTimeout(() => getNewToken(response.data.refreshToken.refreshToken), 20000000);
+        }
+
+        if(!token){
+            await getWudderToken();
+        }
+
+        if(token && !account){
+            if(!account){
+                const meResponse = await wudderFetch({
+                    query: `
+                        query me{
+                            me {
+                                ethAccount
+                            }
+                        }
+                    `
+                });
+                account = accounts.decrypt(meResponse.data.me.ethAccount, ethPassword? ethPassword : '');
+            }
 
         }
 
-        await getWudderToken();
-
-        setInterval(getWudderToken, 20000000);
+        setTimeout(() => getNewToken(refreshToken), 20000000);
 
         const createEvidence = async ({
             fragments,
