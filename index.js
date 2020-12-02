@@ -123,39 +123,10 @@ const Wudder = {
             trace,
             displayName
         }, type) => {
-            const response = await wudderFetch({
-                query: `
-                    mutation formatTransaction($content: ContentInput!, $displayName: String!){
-                        formatTransaction(content: $content, displayName: $displayName){
-                            formattedTransaction
-                            preparedContent
-                        }
-                    }
-                `,
-                variables: {
-                    content: {
-                        type,
-                        trace,
-                        fragments,
-                        descriptor: []
-                    },
-                    displayName
-                }
-            });
-
-            const formatEvidence = response.data.formatTransaction;
-
-            const signedContent = account.sign(formatEvidence.formattedTransaction);
-
-            const evidence = {
-                event_tx: signedContent.message,
-                signature: signedContent.signature.substring(2)
-            };
-
             const result = await wudderFetch({
                 query: `
-                    mutation CreateEvidence($evidence: EvidenceInput!){
-                        createEvidence(evidence: $evidence){
+                    mutation CreateEvidence($evidence: EvidenceInput!, $displayName: String!){
+                        createEvidence(evidence: $evidence, displayName: $displayName){
                             id
                             evhash
                             evidence
@@ -164,7 +135,16 @@ const Wudder = {
                     }
                 `,
                 variables: {
-                    evidence
+                    evidence: {
+                        content: {
+                            type,
+                            trace,
+                            fragments,
+                            descriptor: [],
+                            timestamp: new Date().getTime()
+                        },
+                    },
+                    displayName
                 }
             });
 
