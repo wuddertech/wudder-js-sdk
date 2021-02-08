@@ -1,4 +1,3 @@
-'use strict';
 const stringify = require('json-stable-stringify');
 const { getRootHash } = require('wudder-js/utils');
 const Accounts = require('web3-eth-accounts');
@@ -70,10 +69,13 @@ const Wudder = {
 
             token = response.data.login.token;
             refreshToken = response.data.login.refreshToken;
-            account = accounts.decrypt(response.data.login.ethAccount, ethPassword? ethPassword : '');
+
+            if(response.data.login.ethAccount && ethPassword){
+                account = accounts.decrypt(response.data.login.ethAccount, ethPassword? ethPassword : '');
+            }
         }
 
-        const getNewToken = async (refresh) => {
+        const getNewToken = async refresh => {
             const response = await wudderFetch({
                 query: `
                     mutation refreshToken($token: String!){
@@ -100,7 +102,7 @@ const Wudder = {
             await getWudderToken();
         }
 
-        if(token && !account){
+        if(token && !account && ethPassword){
             if(!account){
                 const meResponse = await wudderFetch({
                     query: `
@@ -111,7 +113,7 @@ const Wudder = {
                         }
                     `
                 });
-                account = accounts.decrypt(meResponse.data.me.ethAccount, ethPassword? ethPassword : '');
+               account = accounts.decrypt(meResponse.data.me.ethAccount, ethPassword? ethPassword : '');
             }
 
         }
@@ -129,6 +131,8 @@ const Wudder = {
                         createEvidence(evidence: $evidence, displayName: $displayName){
                             id
                             evhash
+                            creationDate
+                            displayName
                             evidence
                             originalContent
                         }
@@ -147,7 +151,6 @@ const Wudder = {
                     displayName
                 }
             });
-
             return result;
         }
 
@@ -187,6 +190,7 @@ const Wudder = {
                             trace(evhash: $evhash){
                                 creationEvidence {
                                     id
+                                    creationDate
                                     displayName
                                     evidence
                                     evhash
@@ -206,10 +210,97 @@ const Wudder = {
                         evhash
                     }
                 });
-                return response.data.trace;
+
+                return response;
             },
             createTrace: async data => {
-                const result = await createEvidence(data, 'NEW_TRACE');
+                const result = await createEvidence(data, 'TRACE');
+                return result;
+            },
+            createFileEvidence: async data => {
+                const result = await createEvidence(data, 'FILE');
+                return result;
+            },
+
+            createPreparedEvidence: async ({
+                fragments,
+                trace,
+                displayName
+            }, type) => {
+                const response = await wudderFetch({
+                    query: `
+                        mutation createPreparedEvidence($content: ContentInput!, $displayName: String!){
+                            createPreparedEvidence(content: $content, displayName: $displayName){
+                                formattedTransaction
+                                preparedContent
+                            }
+                        }
+                    `,
+                    variables: {
+                        content: {
+                            type,
+                            trace,
+                            fragments,
+                            descriptor: []
+                        },
+                        displayName
+                    }
+                });
+    
+                return response.data.preparedEvidence;
+            },
+
+            preparedEvidence: async hash => {
+                const response = await wudderFetch({
+                    query: `
+                        query preparedEvidence($hash: String!){
+                            preparedEvidence(hash: $hash){
+                                formattedTransaction
+                                preparedContent
+                            }
+                        }
+                    `,
+                    variables: {
+                        hash
+                    }
+                });
+
+                return response;
+            },
+
+            confirmPreparedEvidence: async preparedEvidence => {
+
+                let signature = '';
+
+                if(account){
+                    const signedContent = account.sign(preparedEvidence.formattedTransaction);   
+                    signature = signedContent.signature.substring(2)
+                }
+    
+                // const evidence = {
+                //     event_tx: signedContent.message,
+                //     signature: signedContent.signature.substring(2)
+                // };
+    
+                const result = await wudderFetch({
+                    query: `
+                        mutation ConfirmPreparedEvidence($evidence: PreparedEvidenceInput!){
+                            confirmPreparedEvidence(evidence: $evidence){
+                                id
+                                evhash
+                                evidence
+                                originalContent
+                            }
+                        }
+                    `,
+                    variables: {
+                        evidence: {
+                            preparedEvidence: preparedEvidence.formattedTransaction,
+                            signature
+                        }
+                    }
+                });
+    
                 return result;
             },
 
@@ -248,7 +339,8 @@ const Wudder = {
                 const json = await response.json();
                 return rootHash === json.result.input.substring(2);
             },
-            myTraces: async options => {
+
+            myTraces: async (options, type) => {
                 if(!options){
                     throw new Error('The pagination options are required');
                 }
@@ -260,14 +352,18 @@ const Wudder = {
                 if(!options.limit || options.limit > 20 || options <= 0){
                     throw new Error('Invalid limit, it only accepts values between 1 and 20');
                 }
+                if(type !== 'TRACE' && type !== 'FILE'){
+                    throw new Error('Invalid type');
+                }
 
                 const response = await wudderFetch({
-                    query: `query MyTraces($options: OptionsInput){
-                        myTraces(options: $options){
+                    query: `query MyTraces($options: OptionsInput, $type: String!){
+                        myTraces(options: $options, type: $type){
                             list {
                                 id
                                 displayName
                                 evidence
+                                creationDate
                                 evhash
                                 originalContent
                             }
@@ -275,7 +371,40 @@ const Wudder = {
                         }
                     }`,
                     variables: {
-                        options
+                        options,
+                        type
+                    }
+                });
+
+                return response;
+            },
+
+            trace: async evhash => {
+                const response = await wudderFetch({
+                    query: `query trace($evhash: String!){
+                        trace(evhash: $evhash){
+                            creationEvidence {
+                                id
+                                creationDate
+                                displayName
+                                evidence
+                                graphnData
+                                evhash
+                                originalContent
+                            }
+                            childs {
+                                id
+                                displayName
+                                evidence
+                                graphnData
+                                evhash
+                                creationDate
+                                originalContent
+                            }
+                        }
+                    }`,
+                    variables: {
+                        evhash
                     }
                 });
 
@@ -286,4 +415,4 @@ const Wudder = {
     }
 }
 
-module.exports = Wudder;
+export default Wudder;
