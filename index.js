@@ -133,7 +133,6 @@ const Wudder = {
                             evhash
                             creationDate
                             displayName
-                            evidence
                             originalContent
                         }
                     }
@@ -161,7 +160,6 @@ const Wudder = {
                         evidence(evhash: $evhash){
                             id
                             displayName
-                            evidence
                             evhash
                             graphnData
                             originalContent
@@ -192,14 +190,12 @@ const Wudder = {
                                     id
                                     creationDate
                                     displayName
-                                    evidence
                                     evhash
                                     originalContent
                                 }
                                 childs {
                                     id
                                     displayName
-                                    evidence
                                     evhash
                                     originalContent
                                 }
@@ -288,7 +284,6 @@ const Wudder = {
                             confirmPreparedEvidence(evidence: $evidence){
                                 id
                                 evhash
-                                evidence
                                 originalContent
                             }
                         }
@@ -362,7 +357,6 @@ const Wudder = {
                             list {
                                 id
                                 displayName
-                                evidence
                                 creationDate
                                 evhash
                                 originalContent
@@ -387,7 +381,6 @@ const Wudder = {
                                 id
                                 creationDate
                                 displayName
-                                evidence
                                 graphnData
                                 evhash
                                 originalContent
@@ -395,7 +388,6 @@ const Wudder = {
                             childs {
                                 id
                                 displayName
-                                evidence
                                 graphnData
                                 evhash
                                 creationDate
@@ -415,4 +407,5 @@ const Wudder = {
     }
 }
 
-export default Wudder;
+
+module.exports = Wudder;
